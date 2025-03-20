@@ -1,0 +1,6 @@
+Password Manager:
+-JSON for data managment
+-Encyripting the JSON file and decrypiting when needed
+-Sleek UI
+-Be able to enter new account easily
+-Fast search and loading
