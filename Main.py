@@ -1,4 +1,30 @@
 import customtkinter as ctk
+from PIL import Image
+import json
+from cryptography.fernet import Fernet
+
+# Top Level Vars
+app_info_window = None
+
+# Methods
+def open_app_info():    
+    global app_info_window
+    if app_info_window is None or not app_info_window.winfo_exists():
+        app_info_window = ctk.CTkToplevel()
+        app_info_window.title("About Window")
+        app_info_window.geometry("300x300")
+        app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.0", font=('Aptos',15))
+        app_info_text.pack(anchor="w")
+        app_info_text2.pack(anchor="w")
+    else:
+        app_info_window.destroy()
+
+def generate_key():
+    pass
+
+def load_accounts():
+    pass
 
 # Initialization
 app = ctk.CTk()
@@ -9,11 +35,56 @@ app.geometry("1600x900")
 sidebar_frame = ctk.CTkFrame(app, width=200, fg_color="#808080")
 sidebar_frame.pack(side="left", fill="y")
 
-testlbl = ctk.CTkLabel(sidebar_frame, text="lol")
-testlbl.pack()
+image = Image.open("icon.png") 
+logo_image_c = ctk.CTkImage(dark_image=image, size=(150,150))
+logo_image = ctk.CTkLabel(sidebar_frame, image=logo_image_c, text="")
+logo_image.pack(padx=10, pady=10)
+
+load_frame = ctk.CTkFrame(sidebar_frame, fg_color="#6b6b6b")
+load_frame.pack(pady=10)
+load_frame_title = ctk.CTkLabel(load_frame, text="Load Options",text_color="#ffffff")
+load_frame_title.pack()
+
+selection_frame = ctk.CTkFrame(sidebar_frame, fg_color="#6b6b6b")
+selection_frame.pack(pady=10)
+selection_frame_title = ctk.CTkLabel(selection_frame, text="Selection Options", text_color="#ffffff")
+selection_frame_title.pack()
+
+info_frame = ctk.CTkFrame(sidebar_frame, fg_color="#6b6b6b")
+info_frame.pack(pady=10)
+info_frame_title = ctk.CTkLabel(info_frame, text="Data Managment", text_color="#ffffff")
+info_frame_title.pack()
+
+# Side Bar Buttons
+load_key_button = ctk.CTkButton(load_frame, text="Load Key", bg_color="#6b6b6b")
+load_key_button.pack(padx=10, pady=10)
+
+load_acc_button = ctk.CTkButton(load_frame, text="Load Accounts [Temp]", bg_color="#6b6b6b", command=load_accounts)
+load_acc_button.pack(padx=10, pady=10)
+
+export_accounts_button = ctk.CTkButton(load_frame, text="Export Accounts")
+export_accounts_button.pack(padx=10, pady=10)
+
+browse_button = ctk.CTkButton(selection_frame, text="Browse all Accounts")
+browse_button.pack(padx=10, pady=10)
+
+search_button = ctk.CTkButton(selection_frame, text="Search for Account")
+search_button.pack(padx=10, pady=10)
+
+add_account_button = ctk.CTkButton(info_frame, text="Add Account")
+add_account_button.pack(padx=10, pady=10)
+
+db_info = ctk.CTkButton(info_frame, text="DB Info")
+db_info.pack(padx=10, pady=10)
+
+app_info = ctk.CTkButton(info_frame, text="About", command=open_app_info)
+app_info.pack(padx=10, pady=10)
+
+generate_key_button = ctk.CTkButton(info_frame, text="Generate New Key")
+generate_key_button.pack(padx=10, pady=10)
 
 # Main Frame
-main_frame = ctk.CTkScrollableFrame(app, )
+main_frame = ctk.CTkScrollableFrame(app)
 main_frame.pack(side="right", fill="both", expand=True)
 
 
