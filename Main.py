@@ -2,9 +2,11 @@ import customtkinter as ctk
 from PIL import Image
 import json
 from cryptography.fernet import Fernet
+import csv
 
 # Top Level Vars
 app_info_window = None
+save_locations = []
 
 # Methods
 def open_app_info():    
@@ -14,17 +16,23 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.0", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.1", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
         app_info_window.destroy()
 
 def generate_key():
-    pass
+    key = Fernet.generate_key()
+    key_location = ctk.filedialog.asksaveasfilename(title="Save Key File", defaultextension=".key", filetypes=[("Key Files", "*.key")])
+    with open(key_location, 'wb') as filekey:
+        filekey.write(key)
 
 def load_accounts():
-    pass
+    with open('Settings.csv', newline='') as settings_file:
+        settings = csv.reader(settings_file, delimiter=',', quotechar='|')
+        for setting in settings:
+            save_locations.append(setting)
 
 # Initialization
 app = ctk.CTk()
@@ -80,7 +88,7 @@ db_info.pack(padx=10, pady=10)
 app_info = ctk.CTkButton(info_frame, text="About", command=open_app_info)
 app_info.pack(padx=10, pady=10)
 
-generate_key_button = ctk.CTkButton(info_frame, text="Generate New Key")
+generate_key_button = ctk.CTkButton(info_frame, text="Generate New Key", command=generate_key)
 generate_key_button.pack(padx=10, pady=10)
 
 # Main Frame
