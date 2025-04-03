@@ -3,12 +3,26 @@ from PIL import Image
 import json
 from cryptography.fernet import Fernet
 import csv
+import os
 
 # Top Level Vars
 app_info_window = None
-save_locations = []
+encypted_account_location = None
+key_location = None
 
 # Methods
+def start():
+    global encypted_account_location
+    global key_location
+    with open('Settings.json', 'r') as file:
+        data = json.load(file)
+
+    if "accountsFileLocation" in data:
+        encypted_account_location = data["accountsFileLocation"]
+    
+    if "keyFileLocation" in data:
+        key_location = data["keyFileLocation"]
+
 def open_app_info():    
     global app_info_window
     if app_info_window is None or not app_info_window.winfo_exists():
@@ -16,7 +30,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.1", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.2", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
@@ -25,14 +39,29 @@ def open_app_info():
 def generate_key():
     key = Fernet.generate_key()
     key_location = ctk.filedialog.asksaveasfilename(title="Save Key File", defaultextension=".key", filetypes=[("Key Files", "*.key")])
-    with open(key_location, 'wb') as filekey:
-        filekey.write(key)
+    if key_location == os.path.isdir:
+        with open(key_location, 'wb') as filekey:
+            filekey.write(key)
 
 def load_accounts():
-    with open('Settings.csv', newline='') as settings_file:
-        settings = csv.reader(settings_file, delimiter=',', quotechar='|')
-        for setting in settings:
-            save_locations.append(setting)
+    # Setup
+    main_frame.grid_forget()
+    main_frame.place_forget()
+    accounts_file_location = ctk.CTkEntry(main_frame, width=250, state='readonly')
+    change_location_button = ctk.CTkButton(main_frame ,text="Change File", command=lambda: change_accounts_location(accounts_file_location))
+    header_label = ctk.CTkLabel(main_frame, text="Accounts Settings", font=('Aptos', 30))
+    file_desc_label = ctk.CTkLabel(main_frame, text="Accounts Location: ")
+    header_label.grid(row=0, column=3, padx=30, pady=(10,50))
+    file_desc_label.grid(row=1, column=0, padx=10, pady=10)
+    accounts_file_location.grid(row=1, column=1, padx=10, pady=10)
+    change_location_button.grid(row=1, column=2, padx=10, pady=10)
+
+def change_accounts_location(entry : ctk.CTkEntry):
+    global encypted_account_location
+    new_location = ctk.filedialog.askopenfilename(title="Select Account JSON File", defaultextension=".json", filetypes=[("JSON Files", "*json")])
+    encypted_account_location = new_location
+    entry.insert(0, new_location)
+
 
 # Initialization
 app = ctk.CTk()
@@ -97,4 +126,5 @@ main_frame.pack(side="right", fill="both", expand=True)
 
 
 # Run the application
+start()
 app.mainloop()
