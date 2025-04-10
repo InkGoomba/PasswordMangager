@@ -2,26 +2,17 @@ import customtkinter as ctk
 from PIL import Image
 import json
 from cryptography.fernet import Fernet
-import csv
 import os
 
-# Top Level Vars
+# Global Vars
 app_info_window = None
-encypted_account_location = None
-key_location = None
+settings_data = None
 
 # Methods
 def start():
-    global encypted_account_location
-    global key_location
+    global settings_data
     with open('Settings.json', 'r') as file:
-        data = json.load(file)
-
-    if "accountsFileLocation" in data:
-        encypted_account_location = data["accountsFileLocation"]
-    
-    if "keyFileLocation" in data:
-        key_location = data["keyFileLocation"]
+        settings_data = json.load(file)
 
 def open_app_info():    
     global app_info_window
@@ -30,7 +21,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.2", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.3", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
@@ -47,20 +38,23 @@ def load_accounts():
     # Setup
     main_frame.grid_forget()
     main_frame.place_forget()
-    accounts_file_location = ctk.CTkEntry(main_frame, width=250, state='readonly')
+    global settings_data
+    accounts_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data["accountsFileLocation"])
     change_location_button = ctk.CTkButton(main_frame ,text="Change File", command=lambda: change_accounts_location(accounts_file_location))
-    header_label = ctk.CTkLabel(main_frame, text="Accounts Settings", font=('Aptos', 30))
     file_desc_label = ctk.CTkLabel(main_frame, text="Accounts Location: ")
-    header_label.grid(row=0, column=3, padx=30, pady=(10,50))
     file_desc_label.grid(row=1, column=0, padx=10, pady=10)
     accounts_file_location.grid(row=1, column=1, padx=10, pady=10)
     change_location_button.grid(row=1, column=2, padx=10, pady=10)
 
 def change_accounts_location(entry : ctk.CTkEntry):
-    global encypted_account_location
+    global settings_data
     new_location = ctk.filedialog.askopenfilename(title="Select Account JSON File", defaultextension=".json", filetypes=[("JSON Files", "*json")])
-    encypted_account_location = new_location
+    settings_data["accountsFileLocation"] = new_location
+    with open("Settings.json", 'w') as file:
+        json.dump(settings_data, file, indent=4)
+    entry.configure(state='normal')
     entry.insert(0, new_location)
+    entry.configure(state='readonly')
 
 
 # Initialization
