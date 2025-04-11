@@ -21,7 +21,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.4", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.5", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
@@ -30,7 +30,7 @@ def open_app_info():
 def generate_key():
     key = Fernet.generate_key()
     key_location = ctk.filedialog.asksaveasfilename(title="Save Key File", defaultextension=".key", filetypes=[("Key Files", "*.key")])
-    if key_location == os.path.isdir:
+    if os.path.isdir(os.path.dirname(key_location)):
         with open(key_location, 'wb') as filekey:
             filekey.write(key)
 
@@ -42,8 +42,8 @@ def load_data():
     settings_data_key_text = ctk.StringVar(value=settings_data["keyFileLocation"])
     accounts_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_accounts_text)
     key_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_key_text)
-    change_accounts_location_button = ctk.CTkButton(main_frame ,text="Change File", command=lambda: change_data_location(settings_data_accounts_text))
-    change_key_location_button = ctk.CTkButton(main_frame, text="Change File")
+    change_accounts_location_button = ctk.CTkButton(main_frame ,text="Change File", command=lambda: change_account_location(settings_data_accounts_text))
+    change_key_location_button = ctk.CTkButton(main_frame, text="Change File", command=lambda: change_key_location(settings_data_key_text))
     accounts_desc_label = ctk.CTkLabel(main_frame, text="Accounts Location:")
     key_desc_label = ctk.CTkLabel(main_frame, text="Key Location:")
     accounts_desc_label.grid(row=0, column=0, padx=10, pady=10)
@@ -53,13 +53,31 @@ def load_data():
     key_file_location.grid(row=1, column=1, padx=10, pady=10)
     change_key_location_button.grid(row=1, column=2, padx=10, pady=10)
 
-def change_data_location(settings_data_text : ctk.StringVar):
+def change_account_location(settings_data_text : ctk.StringVar):
     global settings_data
     new_location = ctk.filedialog.askopenfilename(title="Select Account JSON File", defaultextension=".json", filetypes=[("JSON Files", "*json")])
-    settings_data["accountsFileLocation"] = new_location
-    with open("Settings.json", 'w') as file:
-        json.dump(settings_data, file, indent=4)
-    settings_data_text.set(new_location)
+    if os.path.isfile(new_location):
+        settings_data["accountsFileLocation"] = new_location
+        with open("Settings.json", 'w') as file:
+            json.dump(settings_data, file, indent=4)
+        settings_data_text.set(new_location)
+
+def change_key_location(settings_key_text : ctk.StringVar):
+    global settings_data
+    new_location = ctk.filedialog.askopenfilename(title="Select Key File", defaultextension=".key", filetypes=[("Key Files", "*key")])
+    if os.path.isfile(new_location):
+        settings_data["keyFileLocation"] = new_location
+        with open("Settings.json", 'w') as file:
+            json.dump(settings_data, file, indent=4)
+        settings_key_text.set(new_location)
+
+def display_accounts():
+    global settings_data
+    accounts = None
+
+    if os.path.isfile(settings_data["accountsFileLocation"]):
+        with open(settings_data["accountsFileLocation"], 'r') as file:
+            accounts = json.load(file)
 
 # Initialization
 app = ctk.CTk()

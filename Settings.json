@@ -1,4 +1,4 @@
 {
-    "keyFileLocation": "",
-    "accountsFileLocation": ""
+    "keyFileLocation": "C:/Users/james/Documents/Python Projects/PasswordMangager/mykey.key",
+    "accountsFileLocation": "C:/Users/james/Documents/Python Projects/PasswordMangager/example.json"
 }
