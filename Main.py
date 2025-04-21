@@ -8,6 +8,29 @@ import os
 app_info_window = None
 settings_data = None
 
+# Account Frame Object
+class AccountFrame(ctk.CTkFrame):
+    def __init__(self, master, username, password, site, notes, email, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.username_string = ctk.StringVar(value=username)
+        self.password_string = ctk.StringVar(value=password)
+        self.notes_string = ctk.StringVar(value=notes)
+        self.email_string = ctk.StringVar(value=email)
+
+        self.site = ctk.CTkLabel(self, text=site, font=('Aptos', 20), width=675)
+        self.username = ctk.CTkEntry(self, textvariable=self.username_string, width=300)
+        self.password = ctk.CTkEntry(self, textvariable=self.password_string, width=300)
+        self.notes = ctk.CTkEntry(self, textvariable=self.notes_string, width=300)
+        self.email = ctk.CTkEntry(self, textvariable=self.email_string, width=300)
+        
+        self.site.pack(pady=10)
+        self.email.pack(pady=5)
+        self.username.pack(pady=5)
+        self.password.pack(pady=5)
+        self.notes.pack(pady=5)
+
+
 # Methods
 def start():
     global settings_data
@@ -21,7 +44,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.5", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.6", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
@@ -35,13 +58,13 @@ def generate_key():
             filekey.write(key)
 
 def load_data():
-    main_frame.grid_forget()
-    main_frame.place_forget()
+    for widget in main_frame.winfo_children():
+        widget.destroy()
     global settings_data
     settings_data_accounts_text = ctk.StringVar(value=settings_data["accountsFileLocation"])
     settings_data_key_text = ctk.StringVar(value=settings_data["keyFileLocation"])
-    accounts_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_accounts_text)
-    key_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_key_text)
+    accounts_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_accounts_text, state=ctk.DISABLED)
+    key_file_location = ctk.CTkEntry(main_frame, width=500, textvariable=settings_data_key_text, state=ctk.DISABLED)
     change_accounts_location_button = ctk.CTkButton(main_frame ,text="Change File", command=lambda: change_account_location(settings_data_accounts_text))
     change_key_location_button = ctk.CTkButton(main_frame, text="Change File", command=lambda: change_key_location(settings_data_key_text))
     accounts_desc_label = ctk.CTkLabel(main_frame, text="Accounts Location:")
@@ -73,11 +96,28 @@ def change_key_location(settings_key_text : ctk.StringVar):
 
 def display_accounts():
     global settings_data
-    accounts = None
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+    account_frames = []
 
     if os.path.isfile(settings_data["accountsFileLocation"]):
         with open(settings_data["accountsFileLocation"], 'r') as file:
-            accounts = json.load(file)
+            accounts_data = json.load(file)
+        
+        accounts = accounts_data["accounts"]
+        row_num = 0
+        col_num = 0
+        for account in accounts:
+            account_frames.append(AccountFrame(master=main_frame, site=account["site"], username=account["username"], password=account["password"], email=account["email"], notes=account["notes"], fg_color="#808080"))
+
+        for frame in account_frames:
+            frame.grid(row=row_num, column=col_num, padx=5, pady=5)
+            
+            if col_num == 1:
+                row_num += 1
+                col_num = 0
+            else:
+                col_num += 1
 
 # Initialization
 app = ctk.CTk()
@@ -115,7 +155,7 @@ load_acc_button.pack(padx=10, pady=10)
 export_accounts_button = ctk.CTkButton(load_frame, text="Export Accounts")
 export_accounts_button.pack(padx=10, pady=10)
 
-browse_button = ctk.CTkButton(selection_frame, text="Browse all Accounts")
+browse_button = ctk.CTkButton(selection_frame, text="Browse all Accounts", command=display_accounts)
 browse_button.pack(padx=10, pady=10)
 
 search_button = ctk.CTkButton(selection_frame, text="Search for Account")
