@@ -6,7 +6,9 @@ import os
 
 # Global Vars
 app_info_window = None
+alert_info_window = None
 settings_data = None
+accounts_data = None
 
 # Account Frame Object
 class AccountFrame(ctk.CTkFrame):
@@ -44,18 +46,28 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.6", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.7", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
         app_info_window.destroy()
 
 def generate_key():
+    global alert_info_window
+    global settings_data
     key = Fernet.generate_key()
     key_location = ctk.filedialog.asksaveasfilename(title="Save Key File", defaultextension=".key", filetypes=[("Key Files", "*.key")])
     if os.path.isdir(os.path.dirname(key_location)):
         with open(key_location, 'wb') as filekey:
             filekey.write(key)
+        settings_data["keyFileLocation"] = key_location
+    else:
+        if alert_info_window is None or not alert_info_window.winfo_exists():
+            alert_info_window = ctk.CTkToplevel()
+            alert_info_window.title("Alert")
+            alert_info_window.geometry("300x100")
+            alert_info_text = ctk.CTkLabel(alert_info_window, text="Not a valid file location", font=('Aptos', 15))
+            alert_info_text.pack()
 
 def load_data():
     for widget in main_frame.winfo_children():
@@ -96,6 +108,7 @@ def change_key_location(settings_key_text : ctk.StringVar):
 
 def display_accounts():
     global settings_data
+    global accounts_data
     for widget in main_frame.winfo_children():
         widget.destroy()
     account_frames = []
@@ -103,21 +116,34 @@ def display_accounts():
     if os.path.isfile(settings_data["accountsFileLocation"]):
         with open(settings_data["accountsFileLocation"], 'r') as file:
             accounts_data = json.load(file)
-        
         accounts = accounts_data["accounts"]
         row_num = 0
         col_num = 0
         for account in accounts:
             account_frames.append(AccountFrame(master=main_frame, site=account["site"], username=account["username"], password=account["password"], email=account["email"], notes=account["notes"], fg_color="#808080"))
-
         for frame in account_frames:
             frame.grid(row=row_num, column=col_num, padx=5, pady=5)
-            
             if col_num == 1:
                 row_num += 1
                 col_num = 0
             else:
                 col_num += 1
+
+def export_accounts():
+    global settings_data
+    global accounts_data
+    global alert_info_window
+    key_bytes = None
+    if accounts_data == None:
+        alert_info_window = ctk.CTkToplevel()
+        alert_info_window.title("Alert")
+        alert_info_window.geometry("300x100")
+        alert_info_text = ctk.CTkLabel(alert_info_window, text="No data to save or export", font=('Aptos', 15))
+        alert_info_text.pack()
+    else:
+        with open(settings_data["keyFileLocation"], 'rb') as filekey:
+            key_bytes = filekey.read()
+
 
 # Initialization
 app = ctk.CTk()
@@ -152,7 +178,7 @@ info_frame_title.pack()
 load_acc_button = ctk.CTkButton(load_frame, text="Load Data", bg_color="#6b6b6b", command=load_data)
 load_acc_button.pack(padx=10, pady=10)
 
-export_accounts_button = ctk.CTkButton(load_frame, text="Export Accounts")
+export_accounts_button = ctk.CTkButton(load_frame, text="Save/Export Accounts", command=export_accounts)
 export_accounts_button.pack(padx=10, pady=10)
 
 browse_button = ctk.CTkButton(selection_frame, text="Browse all Accounts", command=display_accounts)
