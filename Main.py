@@ -9,6 +9,7 @@ app_info_window = None
 alert_info_window = None
 settings_data = None
 accounts_data = None
+key_data_fernet = None
 
 # Account Frame Object
 class AccountFrame(ctk.CTkFrame):
@@ -35,9 +36,20 @@ class AccountFrame(ctk.CTkFrame):
 
 # Methods
 def start():
+    global accounts_data
     global settings_data
+    global key_data_fernet
     with open('Settings.json', 'r') as file:
         settings_data = json.load(file)
+    if os.path.isfile(settings_data["keyFileLocation"]):
+        with open(settings_data["keyFileLocation"], 'rb') as filekey:
+            key_bytes = filekey.read()
+        key_data_fernet = Fernet(key_bytes)
+    if os.path.isfile(settings_data["accountsFileLocation"]) and key_data_fernet!=None:
+        with open(settings_data["accountsFileLocation"], 'rb') as enc_file:
+            encrypted_bytes = enc_file.read()
+        decrypted_bytes = key_data_fernet.decrypt(encrypted_bytes)
+        accounts_data = json.loads(decrypted_bytes.decode('utf-8'))
 
 def open_app_info():    
     global app_info_window
@@ -62,12 +74,7 @@ def generate_key():
             filekey.write(key)
         settings_data["keyFileLocation"] = key_location
     else:
-        if alert_info_window is None or not alert_info_window.winfo_exists():
-            alert_info_window = ctk.CTkToplevel()
-            alert_info_window.title("Alert")
-            alert_info_window.geometry("300x100")
-            alert_info_text = ctk.CTkLabel(alert_info_window, text="Not a valid file location", font=('Aptos', 15))
-            alert_info_text.pack()
+        error_popup("Not a valid file location")
 
 def load_data():
     for widget in main_frame.winfo_children():
@@ -114,8 +121,6 @@ def display_accounts():
     account_frames = []
 
     if os.path.isfile(settings_data["accountsFileLocation"]):
-        with open(settings_data["accountsFileLocation"], 'r') as file:
-            accounts_data = json.load(file)
         accounts = accounts_data["accounts"]
         row_num = 0
         col_num = 0
@@ -128,22 +133,36 @@ def display_accounts():
                 col_num = 0
             else:
                 col_num += 1
+    else:
+        error_popup("Account data is missing or invalid")
 
 def export_accounts():
     global settings_data
     global accounts_data
-    global alert_info_window
     key_bytes = None
     if accounts_data == None:
-        alert_info_window = ctk.CTkToplevel()
-        alert_info_window.title("Alert")
-        alert_info_window.geometry("300x100")
-        alert_info_text = ctk.CTkLabel(alert_info_window, text="No data to save or export", font=('Aptos', 15))
-        alert_info_text.pack()
+        error_popup("No data to save or export")
     else:
         with open(settings_data["keyFileLocation"], 'rb') as filekey:
             key_bytes = filekey.read()
 
+        fernet = Fernet(key_bytes)
+        
+def error_popup(error_message):
+    global alert_info_window
+    alert_info_window = ctk.CTkToplevel()
+    alert_info_window.title("Error")
+    alert_info_window.geometry("300x100")
+    alert_info_text = ctk.CTkLabel(master=alert_info_window, text=error_message, font=('Aptos', 15))
+    alert_info_text.pack()
+
+def add_account():
+    global settings_data
+    global accounts_data
+    
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+    
 
 # Initialization
 app = ctk.CTk()
@@ -187,7 +206,7 @@ browse_button.pack(padx=10, pady=10)
 search_button = ctk.CTkButton(selection_frame, text="Search for Account")
 search_button.pack(padx=10, pady=10)
 
-add_account_button = ctk.CTkButton(info_frame, text="Add Account")
+add_account_button = ctk.CTkButton(info_frame, text="Add Account", command=add_account)
 add_account_button.pack(padx=10, pady=10)
 
 db_info = ctk.CTkButton(info_frame, text="DB Info")
