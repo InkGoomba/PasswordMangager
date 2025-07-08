@@ -59,7 +59,7 @@ def start():
             decrypted_bytes = key_data_fernet.decrypt(encrypted_bytes)
             accounts_data = json.loads(decrypted_bytes.decode('utf-8'))
         except:
-            error_popup("Invalid Key. Must use the same key used to encrypt file")
+            info_popup("Invalid Key. Must use the same key used to encrypt file", "Error")
 
 def open_app_info():    
     global app_info_window
@@ -68,7 +68,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.9", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.10", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
     else:
@@ -84,11 +84,13 @@ def generate_key():
             filekey.write(key)
         settings_data["keyFileLocation"] = key_location
     else:
-        error_popup("Not a valid file location")
+        info_popup("Not a valid file location", "Error")
 
 def load_data():
     for widget in main_frame.winfo_children():
         widget.destroy()
+    main_frame.grid_columnconfigure(0,weight=0)
+    main_frame.grid_columnconfigure(1,weight=0)
     global settings_data
     settings_data_accounts_text = ctk.StringVar(value=settings_data["accountsFileLocation"])
     settings_data_key_text = ctk.StringVar(value=settings_data["keyFileLocation"])
@@ -132,7 +134,7 @@ def display_accounts():
     account_frames = []
 
     main_frame.grid_columnconfigure(0,weight=1)
-    main_frame.grid_columnconfigure(1, weight=1)
+    main_frame.grid_columnconfigure(1,weight=1)
 
     if accounts_data != None:
         accounts = accounts_data["accounts"]
@@ -148,7 +150,7 @@ def display_accounts():
             else:
                 col_num += 1
     else:
-        error_popup("Account data is missing or invalid")
+        info_popup("Account data is missing or invalid", "Error")
 
 def export_accounts():
     global settings_data
@@ -156,7 +158,7 @@ def export_accounts():
     global key_data_fernet
 
     if accounts_data == None or key_data_fernet == None:
-        error_popup("Invalid key or account data to save or export")
+        info_popup("Invalid key or account data to save or export", "Error")
     else:
         accounts_json = json.dumps(accounts_data, indent=4)
         accounts_bytes = accounts_json.encode('utf-8')
@@ -165,6 +167,7 @@ def export_accounts():
         if os.path.isfile(settings_data["accountsFileLocation"]):
             with open(settings_data["accountsFileLocation"],'wb') as encrypted_file:
                 encrypted_file.write(encrypted_accounts)
+            info_popup(f"Accounts exported to {settings_data['accountsFileLocation']}", "Success")
         else:
             encrypted_file_location = ctk.filedialog.asksaveasfilename(title="Save Encrypted Account File", defaultextension=".json", filetypes=[("JSON Files", "*.json")])
             if os.path.isdir(os.path.dirname(encrypted_file_location)):
@@ -172,14 +175,14 @@ def export_accounts():
                     encrypted_file.write(encrypted_accounts)
                 settings_data["accountsFileLocation"] = encrypted_file_location
             else:
-                error_popup("Not a valid file location")
+                info_popup("Not a valid file location", "Error")
 
-def error_popup(error_message):
+def info_popup(info_message, info_title):
     global alert_info_window
     alert_info_window = ctk.CTkToplevel()
-    alert_info_window.title("Error")
+    alert_info_window.title(info_title)
     alert_info_window.geometry("300x100")
-    alert_info_text = ctk.CTkLabel(master=alert_info_window, text=error_message, font=('Aptos', 15))
+    alert_info_text = ctk.CTkLabel(master=alert_info_window, text=info_message, font=('Aptos', 15))
     alert_info_text.pack()
 
 def add_account():
@@ -187,6 +190,8 @@ def add_account():
 
     for widget in main_frame.winfo_children():
         widget.destroy()
+    main_frame.grid_columnconfigure(0,weight=0)
+    main_frame.grid_columnconfigure(1,weight=0)
 
     site_name = ctk.CTkEntry(main_frame)
     username = ctk.CTkEntry(main_frame)
