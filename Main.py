@@ -233,6 +233,40 @@ def submit_account_data(site_name, username, password, email, notes):
     else:
         accounts_data["accounts"] = [new_account]
 
+def search_account_page():
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+
+    main_frame.grid_columnconfigure(2,weight=1)
+    main_frame.grid_columnconfigure(3,weight=2)
+
+    search_bar = ctk.CTkEntry(main_frame)
+    search_text = ctk.CTkLabel(main_frame, text="Search")
+    search_button = ctk.CTkButton(main_frame, text="Search Accounts", command= lambda:search_accounts(search_bar.get())) 
+    search_bar.grid(row=0, column=1, padx=10, pady=10)
+    search_text.grid(row=0, column=0, padx=10, pady=10)
+    search_button.grid(row=1, column=0, padx=10, pady=10, columnspan=2)
+
+def search_accounts(query_string:str):
+    global accounts_data
+    account_frames=[]
+
+    if accounts_data != None:
+        for account in accounts_data:
+            if account["site"].lower() in query_string.lower():
+                account_frames.append(AccountFrame(master=main_frame, site=account["site"], username=account["username"], password=account["password"], email=account["email"], notes=account["notes"], fg_color="#808080"))
+        
+        row_num = 0
+        col_num = 2
+        for frame in account_frames:
+            frame.grid(row=row_num, column=col_num, padx=5, pady=5, sticky="nsew")
+            if col_num == 3:
+                row_num += 1
+                col_num = 2
+            else:
+                col_num += 1
+
+
 # Initialization
 app = ctk.CTk()
 app.title("Password Manager")
@@ -272,7 +306,7 @@ export_accounts_button.pack(padx=10, pady=10)
 browse_button = ctk.CTkButton(selection_frame, text="Browse all Accounts", command=display_accounts)
 browse_button.pack(padx=10, pady=10)
 
-search_button = ctk.CTkButton(selection_frame, text="Search for Account")
+search_button = ctk.CTkButton(selection_frame, text="Search for Account", command=search_account_page)
 search_button.pack(padx=10, pady=10)
 
 add_account_button = ctk.CTkButton(info_frame, text="Add Account", command=add_account)
