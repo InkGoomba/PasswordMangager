@@ -3,6 +3,7 @@ from PIL import Image
 import json
 from cryptography.fernet import Fernet
 import os
+from datetime import datetime
 
 # Global Vars
 app_info_window = None
@@ -63,14 +64,28 @@ def start():
 
 def open_app_info():    
     global app_info_window
+    global settings_data
+    global accounts_data
+
     if app_info_window is None or not app_info_window.winfo_exists():
+        total_num_accounts = len(accounts_data["accounts"])
+        last_key_save_date = datetime.fromtimestamp(os.path.getmtime(settings_data["keyFileLocation"])).strftime("%m-%d-%Y")
+        last_accounts_save_date = datetime.fromtimestamp(os.path.getmtime(settings_data["accountsFileLocation"])).strftime("%m-%d-%Y")
+
         app_info_window = ctk.CTkToplevel()
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: b.1.10", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: 1.0", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
+        total_num_accounts_text = ctk.CTkLabel(app_info_window, text=f'Total Accounts in File: {total_num_accounts}', font=('Aptos',15))
+        accounts_last_save_text = ctk.CTkLabel(app_info_window, text=f'Account File Last Save: {last_accounts_save_date}', font=('Aptos',15))
+        key_last_save_text = ctk.CTkLabel(app_info_window, text=f'Key File Last Save: {last_key_save_date}', font=('Aptos',15))
+        total_num_accounts_text.pack(anchor="w")
+        accounts_last_save_text.pack(anchor="w")
+        key_last_save_text.pack(anchor="w")
+
     else:
         app_info_window.destroy()
 
@@ -237,35 +252,36 @@ def search_account_page():
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    main_frame.grid_columnconfigure(2,weight=1)
-    main_frame.grid_columnconfigure(3,weight=2)
+    main_frame.grid_columnconfigure(0,weight=1)
+    main_frame.grid_columnconfigure(1,weight=1)
+    main_frame.grid_columnconfigure(2,weight=2)
 
-    search_bar = ctk.CTkEntry(main_frame)
-    search_text = ctk.CTkLabel(main_frame, text="Search")
+    search_bar = ctk.CTkEntry(main_frame, width=300)
+    search_text = ctk.CTkLabel(main_frame, text="Search", font=('Aptos', 20))
     search_button = ctk.CTkButton(main_frame, text="Search Accounts", command= lambda:search_accounts(search_bar.get())) 
-    search_bar.grid(row=0, column=1, padx=10, pady=10)
+    search_bar.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
     search_text.grid(row=0, column=0, padx=10, pady=10)
-    search_button.grid(row=1, column=0, padx=10, pady=10, columnspan=2)
+    search_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
 def search_accounts(query_string:str):
     global accounts_data
     account_frames=[]
 
+    search_account_page()
+
     if accounts_data != None:
-        for account in accounts_data:
-            if account["site"].lower() in query_string.lower():
+        for account in accounts_data["accounts"]:
+            if query_string.lower() in account["site"].lower():
                 account_frames.append(AccountFrame(master=main_frame, site=account["site"], username=account["username"], password=account["password"], email=account["email"], notes=account["notes"], fg_color="#808080"))
         
-        row_num = 0
-        col_num = 2
-        for frame in account_frames:
-            frame.grid(row=row_num, column=col_num, padx=5, pady=5, sticky="nsew")
-            if col_num == 3:
-                row_num += 1
-                col_num = 2
-            else:
-                col_num += 1
+        row_count = 3
 
+        for frame in account_frames:
+            frame.grid(row=row_count, column=3, padx=5, pady=5, sticky="nsew")
+            row_count = row_count + 1
+
+    else:
+        info_popup("Account data is missing or invalid", "Error")
 
 # Initialization
 app = ctk.CTk()
@@ -311,9 +327,6 @@ search_button.pack(padx=10, pady=10)
 
 add_account_button = ctk.CTkButton(info_frame, text="Add Account", command=add_account)
 add_account_button.pack(padx=10, pady=10)
-
-db_info = ctk.CTkButton(info_frame, text="DB Info")
-db_info.pack(padx=10, pady=10)
 
 app_info = ctk.CTkButton(info_frame, text="About", command=open_app_info)
 app_info.pack(padx=10, pady=10)
