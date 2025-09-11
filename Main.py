@@ -76,7 +76,7 @@ def open_app_info():
         app_info_window.title("About Window")
         app_info_window.geometry("300x300")
         app_info_text = ctk.CTkLabel(app_info_window, text="Created by: James Meyers", font=('Aptos',15))
-        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: 1.0", font=('Aptos',15))
+        app_info_text2 = ctk.CTkLabel(app_info_window, text="Version: 1.01", font=('Aptos',15))
         app_info_text.pack(anchor="w")
         app_info_text2.pack(anchor="w")
         total_num_accounts_text = ctk.CTkLabel(app_info_window, text=f'Total Accounts in File: {total_num_accounts}', font=('Aptos',15))
@@ -92,12 +92,14 @@ def open_app_info():
 def generate_key():
     global alert_info_window
     global settings_data
+    global key_data_fernet
     key = Fernet.generate_key()
     key_location = ctk.filedialog.asksaveasfilename(title="Save Key File", defaultextension=".key", filetypes=[("Key Files", "*.key")])
     if os.path.isdir(os.path.dirname(key_location)):
         with open(key_location, 'wb') as filekey:
             filekey.write(key)
         settings_data["keyFileLocation"] = key_location
+        key_data_fernet = Fernet(key)
     else:
         info_popup("Not a valid file location", "Error")
 
