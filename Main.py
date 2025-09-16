@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from PIL import Image
+import tkinter.messagebox as messagebox
 import json
 from cryptography.fernet import Fernet
 import os
@@ -31,16 +32,82 @@ class AccountFrame(ctk.CTkFrame):
         self.password_label = ctk.CTkLabel(self, text="Password")
         self.notes_label = ctk.CTkLabel(self, text="Notes")
         self.email_label = ctk.CTkLabel(self, text="Email")
-        
-        self.site.grid(row=0, column=0, columnspan=2, padx=5, pady=10)
-        self.username_label.grid(row=1, column=0, padx=(175,10), pady=5)
-        self.password_label.grid(row=2, column=0, padx=(175,10), pady=5)
-        self.email_label.grid(row=3, column=0, padx=(175,10), pady=5)
-        self.notes_label.grid(row=4, column=0, padx=(175,10), pady=5)
-        self.username.grid(row=1, column=1, padx=5, pady=5)
-        self.password.grid(row=2, column=1, padx=5, pady=5)
-        self.email.grid(row=3, column=1, padx=5, pady=5)
-        self.notes.grid(row=4, column=1, padx=5, pady=5)
+        self.save_button = ctk.CTkButton(self, text="Edit and Save", command=self.save_edits)
+        self.delete_button = ctk.CTkButton(self, text="Delete", fg_color="#8B0000", command=self.delete_account)
+
+        self.site.grid(row=0, column=1, columnspan=2, padx=5, pady=10)
+        self.username_label.grid(row=1, column=1, padx=10, pady=5)
+        self.password_label.grid(row=2, column=1, padx=10, pady=5)
+        self.email_label.grid(row=3, column=1, padx=10, pady=5)
+        self.notes_label.grid(row=4, column=1, padx=10, pady=5)
+        self.username.grid(row=1, column=2, padx=5, pady=5)
+        self.password.grid(row=2, column=2, padx=5, pady=5)
+        self.email.grid(row=3, column=2, padx=5, pady=5)
+        self.notes.grid(row=4, column=2, padx=5, pady=5)
+        self.save_button.grid(row=5, column=0, padx=5, pady=5)
+        self.delete_button.grid(row=5, column=3, padx=5, pady=10)
+
+    def save_edits(self):
+        global accounts_data
+
+        new_username = self.username_string.get()
+        new_password = self.password_string.get()
+        new_email = self.email_string.get()
+        new_notes = self.notes_string.get()
+
+        site_text = self.site.cget("text") if hasattr(self.site, 'cget') else None
+        matched_index = None
+        if site_text is not None:
+            for idx, acct in enumerate(accounts_data["accounts"]):
+                if acct.get("site") == site_text:
+                    matched_index = idx
+                    break
+
+        if matched_index is None:
+            info_popup("Could not find matching account to update", "Error")
+            return
+        accounts_data["accounts"][matched_index]["username"] = new_username
+        accounts_data["accounts"][matched_index]["password"] = new_password
+        accounts_data["accounts"][matched_index]["email"] = new_email
+        accounts_data["accounts"][matched_index]["notes"] = new_notes
+
+        try:
+            display_accounts()
+            info_popup("Account updated successfully", "Success")
+        except Exception as e:
+            info_popup(f"Account updated (UI refresh failed): {e}", "Warning")
+    
+    def delete_account(self):
+        global accounts_data
+
+        try:
+            confirm = messagebox.askyesno("Confirm Delete", f"Delete account for {self.site.cget('text')}?")
+        except Exception:
+            confirm = True
+        if not confirm:
+            return
+
+        site_text = self.site.cget("text") if hasattr(self.site, 'cget') else None
+        if site_text is None:
+            info_popup("Unable to determine site to delete", "Error")
+            return
+
+        removed = False
+        for idx, acct in enumerate(accounts_data.get("accounts", [])):
+            if acct.get("site") == site_text:
+                del accounts_data["accounts"][idx]
+                removed = True
+                break
+
+        if not removed:
+            info_popup("Could not find account to delete", "Error")
+            return
+
+        try:
+            display_accounts()
+            info_popup("Account deleted", "Success")
+        except Exception as e:
+            info_popup(f"Account deleted (UI refresh failed): {e}", "Warning")
         
 # Methods
 def start():
